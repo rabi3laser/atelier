@@ -118,6 +118,11 @@ export default function DevisForm({ devis, lignes = [], preselectedTemplateId, o
       finalData.numero = generateNumero();
     }
     
+    // Convertir les chaînes vides en null pour les champs de date
+    if (finalData.date_validite === '') {
+      finalData.date_validite = null;
+    }
+    
     // Calculer les totaux
     const totalHT = formLignes.reduce((sum, ligne) => sum + ligne.montant_ht, 0);
     const totalTVA = formLignes.reduce((sum, ligne) => sum + ligne.montant_tva, 0);
