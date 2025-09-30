@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Eye, FileText, CheckCircle, TestTube, Building2 } from 'lucide-react';
+import { Plus, Search, Eye, FileText, CheckCircle, TestTube, Building2, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DevisWithClient } from '../types/commercial';
 import { getDevis, convertDevisToCommande, getDevisById, getDevisLignes, getClients } from '../lib/commercial';
@@ -17,6 +17,9 @@ import { PDFGenerator, DevisData } from '../lib/pdfGenerator';
 import GenerateDocumentButton from '../components/GenerateDocumentButton';
 import ConfigTest from '../components/ConfigTest';
 import CompanyInfoExtractor from '../components/CompanyInfoExtractor';
+import DevisOptionsModal from '../components/DevisOptionsModal';
+import TemplateSelector from '../components/TemplateSelector';
+import CustomTemplateCreator from '../components/CustomTemplateCreator';
 
 export default function Quotes() {
   const navigate = useNavigate();
@@ -31,6 +34,9 @@ export default function Quotes() {
   const [isConverting, setIsConverting] = useState<string | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [currentFlow, setCurrentFlow] = useState<'template' | 'custom' | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
   useEffect(() => {
     loadDevis();
@@ -75,6 +81,27 @@ export default function Quotes() {
     loadDevis();
   };
 
+  const handleOptionSelect = (option: 'template' | 'custom') => {
+    setCurrentFlow(option);
+    setShowOptionsModal(false);
+  };
+
+  const handleTemplateSelected = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    // Naviguer vers le formulaire de création de devis avec le template sélectionné
+    navigate(`/quotes/new?template=${templateId}`);
+  };
+
+  const handleCustomTemplateCreated = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    // Naviguer vers le formulaire de création de devis avec le nouveau template
+    navigate(`/quotes/new?template=${templateId}`);
+  };
+
+  const handleBackToOptions = () => {
+    setCurrentFlow(null);
+    setShowOptionsModal(true);
+  };
   const getStatusBadge = (statut: string) => {
     const config = {
       brouillon: { variant: 'default' as const, label: 'Brouillon' },
@@ -204,9 +231,9 @@ export default function Quotes() {
             <Building2 size={20} className="mr-2" />
             Info société
           </Button>
-          <Button onClick={() => navigate('/quotes/new')}>
-            <Plus size={20} className="mr-2" />
-            Nouveau devis
+          <Button onClick={() => setShowOptionsModal(true)}>
+            <Sparkles size={20} className="mr-2" />
+            Créer un devis
           </Button>
         </div>
       </div>
@@ -290,6 +317,43 @@ export default function Quotes() {
       >
         <CompanyInfoExtractor />
       </Modal>
+
+      {/* Modal choix d'options */}
+      <DevisOptionsModal
+        isOpen={showOptionsModal}
+        onClose={() => setShowOptionsModal(false)}
+        onSelectOption={handleOptionSelect}
+      />
+
+      {/* Flux Template Selector */}
+      {currentFlow === 'template' && (
+        <Modal
+          isOpen={true}
+          onClose={handleBackToOptions}
+          title=""
+          size="xl"
+        >
+          <TemplateSelector
+            onTemplateSelected={handleTemplateSelected}
+            onBack={handleBackToOptions}
+          />
+        </Modal>
+      )}
+
+      {/* Flux Custom Template Creator */}
+      {currentFlow === 'custom' && (
+        <Modal
+          isOpen={true}
+          onClose={handleBackToOptions}
+          title=""
+          size="xl"
+        >
+          <CustomTemplateCreator
+            onTemplateCreated={handleCustomTemplateCreated}
+            onBack={handleBackToOptions}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

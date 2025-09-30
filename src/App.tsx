@@ -22,6 +22,7 @@ import Lots from './pages/Lots';
 import Scraps from './pages/Scraps';
 import Analytics from './pages/Analytics';
 import Templates from './pages/Templates';
+import QuickDevis from './pages/QuickDevis';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         <Route path="/scraps" element={<Scraps />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/templates" element={<Templates />} />
+        <Route path="/quick-devis" element={<QuickDevis />} />
       </Routes>
       <MobileBottomNav />
     </Layout>

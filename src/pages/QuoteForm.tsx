@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Devis, DevisLigne } from '../types/commercial';
 import { getDevisById, getDevisLignes, createDevis, updateDevis, saveDevisLignes } from '../lib/commercial';
@@ -10,14 +10,22 @@ import DevisForm from '../components/DevisForm';
 export default function QuoteForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [devis, setDevis] = useState<Devis | null>(null);
   const [lignes, setLignes] = useState<DevisLigne[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preselectedTemplateId, setPreselectedTemplateId] = useState<string>('');
 
   const isEdit = id !== 'new';
 
   useEffect(() => {
+    // Récupérer le template ID depuis les paramètres URL
+    const templateParam = searchParams.get('template');
+    if (templateParam) {
+      setPreselectedTemplateId(templateParam);
+    }
+    
     if (isEdit && id) {
       loadDevisData();
     } else {
@@ -104,6 +112,7 @@ export default function QuoteForm() {
         <DevisForm
           devis={devis || undefined}
           lignes={lignes}
+          preselectedTemplateId={preselectedTemplateId}
           onSubmit={handleSubmit}
           onCancel={() => navigate('/quotes')}
           isLoading={isSubmitting}

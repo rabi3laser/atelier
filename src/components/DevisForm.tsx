@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, RefreshCw } from 'lucide-react';
 import { Devis, DevisLigne } from '../types/commercial';
 import { getClients, getMatieres } from '../lib/commercial';
+import { templateService, QuoteTemplate } from '../lib/templateService';
 import FormRow from './FormRow';
 import Button from './Button';
 import NumberInput from './NumberInput';
@@ -10,12 +11,13 @@ import { fmtMAD } from '../lib/format';
 interface DevisFormProps {
   devis?: Devis;
   lignes?: DevisLigne[];
+  preselectedTemplateId?: string;
   onSubmit: (devis: Omit<Devis, 'id' | 'created_at' | 'updated_at'>, lignes: Omit<DevisLigne, 'id' | 'devis_id'>[]) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export default function DevisForm({ devis, lignes = [], onSubmit, onCancel, isLoading = false }: DevisFormProps) {
+export default function DevisForm({ devis, lignes = [], preselectedTemplateId, onSubmit, onCancel, isLoading = false }: DevisFormProps) {
   // Fonction pour générer un numéro de devis automatique
   const generateNumero = () => {
     const year = new Date().getFullYear();
@@ -68,6 +70,8 @@ export default function DevisForm({ devis, lignes = [], onSubmit, onCancel, isLo
   const [clients, setClients] = useState<Array<{ id: string; nom: string }>>([]);
   const [matieres, setMatieres] = useState<Array<{ id: string; designation: string; prix_vente_unitaire: number }>>([]);
   const [isNumeroGenerated, setIsNumeroGenerated] = useState(false);
+  const [templates, setTemplates] = useState<QuoteTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(devis?.template_id || preselectedTemplateId || '');
 
   useEffect(() => {
     loadData();
@@ -82,12 +86,24 @@ export default function DevisForm({ devis, lignes = [], onSubmit, onCancel, isLo
 
   const loadData = async () => {
     try {
-      const [clientsData, matieresData] = await Promise.all([
+      const [clientsData, matieresData, templatesData] = await Promise.all([
         getClients(),
         getMatieres(),
+        templateService.getTemplates(),
       ]);
       setClients(clientsData);
       setMatieres(matieresData);
+      setTemplates(templatesData);
+      
+      // Si pas de template sélectionné, prendre le template par défaut
+      if (!selectedTemplateId && !preselectedTemplateId) {
+        const defaultTemplate = templatesData.find(t => t.is_default);
+        if (defaultTemplate) {
+          setSelectedTemplateId(defaultTemplate.id);
+        }
+      } else if (preselectedTemplateId) {
+        setSelectedTemplateId(preselectedTemplateId);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
     }
@@ -121,6 +137,7 @@ export default function DevisForm({ devis, lignes = [], onSubmit, onCancel, isLo
 
     await onSubmit({
       ...finalData,
+      template_id: selectedTemplateId || null,
       montant_ht: montantHT,
       montant_tva: montantTVA,
       montant_ttc: montantTTC,
@@ -298,6 +315,24 @@ export default function DevisForm({ devis, lignes = [], onSubmit, onCancel, isLo
             min="0"
             max="100"
           />
+        </FormRow>
+
+        <FormRow label="Template de devis">
+          <select
+            value={selectedTemplateId}
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          >
+            <option value="">Template par défaut</option>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name} {template.is_default ? '(Par défaut)' : ''}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Le template détermine l'apparence de votre PDF de devis
+          </p>
         </FormRow>
       </div>
 

@@ -36,6 +36,7 @@ const menuItems = [
     category: 'Commercial',
     items: [
       { path: '/clients', label: 'Clients', icon: Users },
+      { path: '/quick-devis', label: 'Générateur Devis', icon: FileText },
       { path: '/quotes', label: 'Devis', icon: FileText },
       { path: '/orders', label: 'Commandes', icon: ShoppingCart },
       { path: '/invoices', label: 'Factures', icon: Receipt },
